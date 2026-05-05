@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="雅思备考">
+  <meta name="theme-color" content="#4F7FFF">
+  <title>雅思备考 IELTS Prep</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+</head>
+<body>
+
+  <div id="app">
+    <!-- Page content renders here -->
+    <div id="page-container"></div>
+
+    <!-- Bottom Navigation -->
+    <nav id="bottom-nav">
+      <button class="nav-btn active" data-page="home">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">首页</span>
+      </button>
+      <button class="nav-btn" data-page="vocabulary">
+        <span class="nav-icon">📚</span>
+        <span class="nav-label">词汇</span>
+      </button>
+      <button class="nav-btn" data-page="speaking">
+        <span class="nav-icon">🎙️</span>
+        <span class="nav-label">口语</span>
+      </button>
+      <button class="nav-btn" data-page="writing">
+        <span class="nav-icon">✍️</span>
+        <span class="nav-label">写作</span>
+      </button>
+      <button class="nav-btn" data-page="checkin">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">打卡</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Data Layer -->
+  <script src="data/words.js"></script>
+  <script src="data/words2.js"></script>
+  <script src="data/words3.js"></script>
+  <script src="data/words4.js"></script>
+  <script src="data/words5.js"></script>
+  <script src="data/words6.js"></script>
+  <script src="data/words7.js"></script>
+  <script src="data/words8.js"></script>
+  <script src="data/words9.js"></script>
+  <script src="data/words10.js"></script>
+  <script src="data/speaking.js"></script>
+  <script src="data/writing.js"></script>
+
+  <!-- Core Layer -->
+  <script src="js/storage.js"></script>
+  <script src="js/router.js"></script>
+
+  <!-- Module Layer -->
+  <script src="js/modules/vocab.js"></script>
+  <script src="js/modules/speaking.js"></script>
+  <script src="js/modules/writing.js"></script>
+  <script src="js/modules/checkin.js"></script>
+
+  <!-- Page Layer -->
+  <script src="js/pages/home.js"></script>
+  <script src="js/pages/vocab.js"></script>
+  <script src="js/pages/speaking.js"></script>
+  <script src="js/pages/writing.js"></script>
+  <script src="js/pages/checkin.js"></script>
+
+  <!-- App Entry -->
+  <script src="js/app.js"></script>
+
+</body>
+</html>
