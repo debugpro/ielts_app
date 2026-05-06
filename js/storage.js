@@ -186,6 +186,15 @@ window.IELTS.storage = (() => {
     set('example_cache', cache);
   };
 
+  // ── Custom AI passages cache ────────────────────────────────────
+  const getCustomPassages = () => get('custom_passages', []);
+
+  const saveCustomPassage = (passage) => {
+    const passages = getCustomPassages();
+    passages.unshift(passage);
+    set('custom_passages', passages.slice(0, 10));
+  };
+
   // ── Overall stats ───────────────────────────────────────────────
   const getStats = () => {
     const vocab = getVocabProgress();
@@ -203,6 +212,7 @@ window.IELTS.storage = (() => {
     getCheckinData, doCheckin, hasCheckedInToday,
     getSettings, saveSettings,
     getStats,
-    getCachedExamples, setCachedExamples
+    getCachedExamples, setCachedExamples,
+    getCustomPassages, saveCustomPassage
   };
 })();

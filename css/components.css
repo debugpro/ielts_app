@@ -890,3 +890,47 @@
 .celebration-emoji { font-size: 64px; margin-bottom: 16px; }
 .celebration-text { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
 .celebration-streak { font-size: 20px; opacity: 0.9; }
+
+/* ── Speaking Reading / Passage ─────────────────────────────────── */
+.passage-nav { padding: 14px 16px; margin-bottom: 12px; }
+.passage-nav-info { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.passage-topic-badge { background: var(--primary); color: white; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+.passage-level { font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 10px; }
+.level-初级 { background: #E8F5E9; color: #2E7D32; }
+.level-中级 { background: #FFF3E0; color: #E65100; }
+.level-高级 { background: #FCE4EC; color: #C62828; }
+.passage-duration { font-size: 12px; color: var(--subtext); }
+.passage-nav-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.passage-counter { font-size: 12px; color: var(--subtext); }
+
+.passage-legend { font-size: 12px; color: var(--subtext); margin-bottom: 10px; padding: 0 4px; }
+.legend-vocab { font-weight: 700; color: #1565C0; }
+.legend-phrase { background: #FFF59D; padding: 1px 4px; border-radius: 3px; }
+
+.passage-card { padding: 18px; margin-bottom: 12px; }
+.passage-text { font-size: 16px; line-height: 2; color: var(--text); }
+.highlight-vocab { color: #1565C0; font-weight: 700; font-style: normal; }
+.highlight-phrase { background: #FFF59D; padding: 1px 2px; border-radius: 3px; font-weight: inherit; }
+
+.passage-actions { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.passage-actions .btn { flex: 1; min-width: 80px; }
+
+.passage-phrases { padding: 14px 16px; }
+.phrases-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; color: var(--text); }
+.phrase-item { font-size: 14px; color: #555; padding: 6px 0; border-bottom: 1px solid var(--border); font-style: italic; }
+.phrase-item:last-child { border-bottom: none; }
+
+/* Custom AI passage generation */
+.custom-gen-section { padding: 16px; margin-top: 12px; }
+.custom-gen-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.custom-gen-sub { font-size: 12px; color: var(--subtext); margin-bottom: 12px; }
+.custom-gen-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.custom-gen-input { flex: 1; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 14px; outline: none; background: var(--surface); color: var(--text); }
+.custom-gen-input:focus { border-color: var(--primary); }
+.custom-recent { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.custom-chip { background: var(--primary-light); color: var(--primary); border: none; border-radius: 14px; padding: 4px 12px; font-size: 12px; cursor: pointer; font-weight: 600; }
+.custom-gen-loading { text-align: center; padding: 20px; color: var(--subtext); font-size: 14px; }
+.custom-gen-error { color: #D32F2F; font-size: 13px; padding: 10px 12px; background: #FFEBEE; border-radius: 8px; margin-top: 8px; }
+.custom-result-card { border-top: 1px solid var(--border); padding-top: 14px; margin-top: 14px; }
+.custom-result-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.level-自定义 { background: #EDE7F6; color: #4527A0; }

@@ -280,9 +280,10 @@ Format your response as valid JSON:
         'Authorization': `Bearer ${settings.baiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-5.2',
+        model: 'gpt-5.4-nano',
         max_tokens: 1024,
         temperature: 0.7,
+        response_format: { type: 'json_object' },
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -293,12 +294,13 @@ Format your response as valid JSON:
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
+    const content = data.choices?.[0]?.message?.content || '';
+    if (!content) throw new Error(`B.ai响应为空: ${JSON.stringify(data).slice(0,200)}`);
 
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('Invalid B.ai response format');
+    const s = content.indexOf('{'), e = content.lastIndexOf('}');
+    if (s === -1 || e <= s) throw new Error(`B.ai返回格式错误: ${content.slice(0,150)}`);
 
-    const result = JSON.parse(jsonMatch[0]);
+    const result = JSON.parse(content.slice(s, e + 1));
     result.wordCount = countWords(text);
     result.aiScored = true;
     result.aiProvider = 'bai';

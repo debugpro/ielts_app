@@ -37,10 +37,10 @@ async function generateAndCacheExamples(word, backEl, renderFn) {
       const res = await fetch('https://api.b.ai/v1/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${settings.baiKey}` },
-        body: JSON.stringify({ model: 'gpt-5.2', max_tokens: 300, temperature: 0.7, messages: [{ role: 'user', content: prompt }] })
+        body: JSON.stringify({ model: 'gpt-5.4-nano', max_tokens: 300, temperature: 0.7, response_format: { type: 'json_object' }, messages: [{ role: 'user', content: prompt }] })
       });
-      const data = await res.json();
-      content = data.choices[0].message.content;
+      const baiJson = await res.json();
+      content = baiJson.choices?.[0]?.message?.content || JSON.stringify(baiJson).slice(0, 200);
     } else {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
