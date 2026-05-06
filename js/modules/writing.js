@@ -156,16 +156,11 @@ window.IELTS.writingModule = (() => {
     };
   };
 
-  // Score using Claude API
-  const scoreWithAI = async (text, question, taskType) => {
-    const settings = IELTS.storage.getSettings();
-    if (!settings.apiKey) throw new Error('NO_API_KEY');
-
+  const buildPrompt = (text, question, taskType) => {
     const taskContext = taskType === 'task1'
       ? 'IELTS Academic Writing Task 1 (describe visual data in at least 150 words)'
       : 'IELTS Academic Writing Task 2 (essay in at least 250 words)';
-
-    const prompt = `You are an expert IELTS examiner. Evaluate the following ${taskContext} response.
+    return `You are an expert IELTS examiner. Evaluate the following ${taskContext} response.
 
 QUESTION:
 ${question}
@@ -191,6 +186,17 @@ Format your response as valid JSON:
     "Key improvements: ..."
   ]
 }`;
+  };
+
+  // Score using Claude API
+  const scoreWithAI = async (text, question, taskType) => {
+    const settings = IELTS.storage.getSettings();
+    const provider = settings.aiProvider || 'anthropic';
+    if (provider === 'deepseek') return scoreWithDeepSeek(text, question, taskType);
+    if (provider === 'bai') return scoreWithBAI(text, question, taskType);
+    if (!settings.apiKey) throw new Error('NO_API_KEY');
+
+    const prompt = buildPrompt(text, question, taskType);
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -224,6 +230,81 @@ Format your response as valid JSON:
     return result;
   };
 
+  const scoreWithDeepSeek = async (text, question, taskType) => {
+    const settings = IELTS.storage.getSettings();
+    if (!settings.deepseekKey) throw new Error('NO_DEEPSEEK_KEY');
+
+    const prompt = buildPrompt(text, question, taskType);
+
+    const response = await fetch('https://api.deepseek.com/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${settings.deepseekKey}`
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error?.message || `DeepSeek API error ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('Invalid DeepSeek response format');
+
+    const result = JSON.parse(jsonMatch[0]);
+    result.wordCount = countWords(text);
+    result.aiScored = true;
+    result.aiProvider = 'deepseek';
+    return result;
+  };
+
+  const scoreWithBAI = async (text, question, taskType) => {
+    const settings = IELTS.storage.getSettings();
+    if (!settings.baiKey) throw new Error('NO_BAI_KEY');
+
+    const prompt = buildPrompt(text, question, taskType);
+
+    const response = await fetch('https://api.b.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${settings.baiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-5.2',
+        max_tokens: 1024,
+        temperature: 0.7,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error?.message || `B.ai API error ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('Invalid B.ai response format');
+
+    const result = JSON.parse(jsonMatch[0]);
+    result.wordCount = countWords(text);
+    result.aiScored = true;
+    result.aiProvider = 'bai';
+    return result;
+  };
+
   const getRandomQuestion = (taskType) => {
     const questions = IELTS.writingQuestions[taskType];
     return questions[Math.floor(Math.random() * questions.length)];
@@ -235,5 +316,5 @@ Format your response as valid JSON:
     IELTS.storage.saveWritingAttempt(questionId, text, score);
   };
 
-  return { scoreLocally, scoreWithAI, getRandomQuestion, getAllQuestions, saveAttempt, countWords };
+  return { scoreLocally, scoreWithAI, scoreWithDeepSeek, scoreWithBAI, getRandomQuestion, getAllQuestions, saveAttempt, countWords };
 })();

@@ -19,10 +19,6 @@ window.IELTS.pages.home = (container) => {
           <span class="greeting-text">${greeting}！</span>
           <span class="home-date">${today.toLocaleDateString('zh-CN', {month:'long', day:'numeric', weekday:'short'})}</span>
         </div>
-        <div class="target-badge">
-          <span class="target-emoji">🇦🇺</span>
-          <span class="target-text">目标：雅思 8.8.8.8</span>
-        </div>
       </div>
 
       <!-- Streak Banner -->
@@ -164,9 +160,36 @@ function showSettings() {
     <div class="modal-card">
       <div class="modal-title">⚙️ 设置</div>
       <div class="modal-section">
+        <div class="modal-label">AI 评分提供商</div>
+        <div class="provider-tabs">
+          <label class="provider-tab ${(settings.aiProvider || 'anthropic') === 'anthropic' ? 'active' : ''}">
+            <input type="radio" name="ai-provider" value="anthropic" ${(settings.aiProvider || 'anthropic') === 'anthropic' ? 'checked' : ''}>
+            Claude (Anthropic)
+          </label>
+          <label class="provider-tab ${settings.aiProvider === 'deepseek' ? 'active' : ''}">
+            <input type="radio" name="ai-provider" value="deepseek" ${settings.aiProvider === 'deepseek' ? 'checked' : ''}>
+            DeepSeek
+          </label>
+          <label class="provider-tab ${settings.aiProvider === 'bai' ? 'active' : ''}">
+            <input type="radio" name="ai-provider" value="bai" ${settings.aiProvider === 'bai' ? 'checked' : ''}>
+            B.ai
+          </label>
+        </div>
+      </div>
+      <div class="modal-section">
         <div class="modal-label">Anthropic API Key</div>
-        <div class="modal-hint">用于写作AI评分功能（可选）。获取：console.anthropic.com</div>
+        <div class="modal-hint">获取：console.anthropic.com</div>
         <input type="password" id="api-key-input" class="modal-input" placeholder="sk-ant-..." value="${settings.apiKey || ''}">
+      </div>
+      <div class="modal-section">
+        <div class="modal-label">DeepSeek API Key</div>
+        <div class="modal-hint">获取：platform.deepseek.com</div>
+        <input type="password" id="deepseek-key-input" class="modal-input" placeholder="sk-..." value="${settings.deepseekKey || ''}">
+      </div>
+      <div class="modal-section">
+        <div class="modal-label">B.ai API Key</div>
+        <div class="modal-hint">获取：api.b.ai</div>
+        <input type="password" id="bai-key-input" class="modal-input" placeholder="sk-..." value="${settings.baiKey || ''}">
       </div>
       <div class="modal-section">
         <div class="modal-label">每日词汇目标</div>
@@ -185,10 +208,21 @@ function showSettings() {
   });
 
   document.getElementById('modal-cancel').addEventListener('click', () => modal.remove());
+  modal.querySelectorAll('input[name="ai-provider"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      modal.querySelectorAll('.provider-tab').forEach(t => t.classList.remove('active'));
+      radio.closest('.provider-tab').classList.add('active');
+    });
+  });
+
   document.getElementById('modal-save').addEventListener('click', () => {
+    const selectedProvider = modal.querySelector('input[name="ai-provider"]:checked')?.value || 'anthropic';
     const newSettings = {
       ...settings,
       apiKey: document.getElementById('api-key-input').value.trim(),
+      deepseekKey: document.getElementById('deepseek-key-input').value.trim(),
+      baiKey: document.getElementById('bai-key-input').value.trim(),
+      aiProvider: selectedProvider,
       dailyVocabTarget: parseInt(document.getElementById('daily-target-input').value) || 20
     };
     IELTS.storage.saveSettings(newSettings);

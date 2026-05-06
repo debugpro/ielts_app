@@ -174,7 +174,10 @@
   min-height: 280px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
+  touch-action: pan-y;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius);
 }
 
 .flashcard-inner {
@@ -253,9 +256,27 @@
   text-align: center;
   margin-bottom: 16px;
 }
+.card-examples-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.card-example-item {
+  display: flex;
+  gap: 4px;
+  align-items: flex-start;
+}
+.card-example-num {
+  font-size: 11px;
+  opacity: 0.6;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
 .card-example {
   font-size: 13px;
-  text-align: center;
+  text-align: left;
   opacity: 0.85;
   line-height: 1.6;
   font-style: italic;
@@ -263,7 +284,7 @@
 .card-example-label {
   font-size: 11px;
   opacity: 0.6;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .tap-hint {
@@ -785,6 +806,58 @@
 .motivation-card { background: linear-gradient(135deg, #1A1A2E, #2D3561); color: white; margin-bottom: 24px; }
 .motivation-text { font-size: 15px; line-height: 1.7; font-style: italic; margin-bottom: 12px; }
 .motivation-target { font-size: 13px; opacity: 0.8; font-weight: 600; }
+
+/* Provider selector in settings */
+.provider-tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.provider-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--subtext);
+  background: var(--bg);
+  transition: all 0.2s;
+}
+.provider-tab input { accent-color: var(--primary); }
+.provider-tab.active {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+/* Swipe gesture indicator overlays */
+.swipe-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: 800;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s;
+  z-index: 2;
+}
+.swipe-overlay-right {
+  background: rgba(107, 203, 119, 0.35);
+  color: #2d8a3e;
+}
+.swipe-overlay-left {
+  background: rgba(255, 107, 107, 0.35);
+  color: #c0392b;
+}
 
 /* Celebration overlay */
 .checkin-celebration {

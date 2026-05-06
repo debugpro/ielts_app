@@ -27,6 +27,8 @@ window.IELTS.pages.vocabulary = (container) => {
       <!-- Flashcard area -->
       <div class="flashcard-container" id="flashcard-container">
         <div class="flashcard" id="flashcard">
+          <div class="swipe-overlay swipe-overlay-right" id="swipe-hint-right">✓ 认识</div>
+          <div class="swipe-overlay swipe-overlay-left" id="swipe-hint-left">✗ 不认识</div>
           <div class="flashcard-inner" id="flashcard-inner">
             <div class="flashcard-front" id="card-front">
               <div class="loading-card">加载中…</div>
@@ -34,7 +36,7 @@ window.IELTS.pages.vocabulary = (container) => {
             <div class="flashcard-back" id="card-back"></div>
           </div>
         </div>
-        <div class="tap-hint" id="tap-hint">点击卡片查看释义</div>
+        <div class="tap-hint" id="tap-hint">点击翻转 · 左滑不认识 · 右滑认识</div>
       </div>
 
       <!-- Action buttons -->
@@ -80,11 +82,22 @@ window.IELTS.pages.vocabulary = (container) => {
       <div class="card-pos">${currentWord.pos || ''}</div>
     `;
 
+    const examples = currentWord.examples && currentWord.examples.length
+      ? currentWord.examples
+      : (currentWord.example ? [currentWord.example] : []);
+
     back.innerHTML = `
       <div class="card-word-small">${currentWord.word}</div>
       <div class="card-def">${currentWord.def}</div>
-      <div class="card-example">"${currentWord.example}"</div>
-      <div class="card-example-label">例句</div>
+      <div class="card-examples-list">
+        ${examples.map((ex, i) => `
+          <div class="card-example-item">
+            <span class="card-example-num">${examples.length > 1 ? (i + 1) + '.' : ''}</span>
+            <span class="card-example">"${ex}"</span>
+          </div>
+        `).join('')}
+      </div>
+      ${examples.length ? '<div class="card-example-label">例句</div>' : ''}
     `;
   };
 
@@ -110,7 +123,88 @@ window.IELTS.pages.vocabulary = (container) => {
     }
   };
 
-  document.getElementById('flashcard')?.addEventListener('click', flipCard);
+  // ── Swipe gesture handling ────────────────────────────────────────
+  const SWIPE_THRESHOLD = 70;
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let isDragging = false;
+  let hasSwiped = false;
+
+  const flashcard = document.getElementById('flashcard');
+  const hintRight = document.getElementById('swipe-hint-right');
+  const hintLeft = document.getElementById('swipe-hint-left');
+
+  flashcard?.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    isDragging = false;
+    hasSwiped = false;
+  }, { passive: true });
+
+  flashcard?.addEventListener('touchmove', (e) => {
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = e.touches[0].clientY - touchStartY;
+    if (!isDragging && Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+    isDragging = true;
+
+    const inner = document.getElementById('flashcard-inner');
+    if (!inner) return;
+    const rotate = dx * 0.08;
+    inner.style.transform = inner.classList.contains('flipped')
+      ? `rotateY(180deg) translateX(${-dx}px) rotate(${-rotate}deg)`
+      : `translateX(${dx}px) rotate(${rotate}deg)`;
+    inner.style.transition = 'none';
+
+    const ratio = Math.min(Math.abs(dx) / SWIPE_THRESHOLD, 1);
+    if (dx > 10) {
+      if (hintRight) hintRight.style.opacity = ratio;
+      if (hintLeft) hintLeft.style.opacity = 0;
+    } else if (dx < -10) {
+      if (hintLeft) hintLeft.style.opacity = ratio;
+      if (hintRight) hintRight.style.opacity = 0;
+    } else {
+      if (hintRight) hintRight.style.opacity = 0;
+      if (hintLeft) hintLeft.style.opacity = 0;
+    }
+  }, { passive: true });
+
+  flashcard?.addEventListener('touchend', (e) => {
+    if (hintRight) hintRight.style.opacity = 0;
+    if (hintLeft) hintLeft.style.opacity = 0;
+
+    const inner = document.getElementById('flashcard-inner');
+    if (inner) {
+      inner.style.transition = '';
+      inner.style.transform = inner.classList.contains('flipped') ? 'rotateY(180deg)' : '';
+    }
+
+    if (!isDragging) {
+      flipCard();
+      return;
+    }
+
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (dx > SWIPE_THRESHOLD) {
+      hasSwiped = true;
+      if (currentWord) {
+        IELTS.vocabModule.markKnown(currentWord.id);
+        animateCard('right');
+        setTimeout(() => { loadNextWord(); updateStats(); }, 400);
+      }
+    } else if (dx < -SWIPE_THRESHOLD) {
+      hasSwiped = true;
+      if (currentWord) {
+        IELTS.vocabModule.markUnknown(currentWord.id);
+        animateCard('left');
+        setTimeout(() => { loadNextWord(); updateStats(); }, 400);
+      }
+    }
+  }, { passive: true });
+
+  flashcard?.addEventListener('click', (e) => {
+    if (hasSwiped) { hasSwiped = false; return; }
+    flipCard();
+  });
 
   document.getElementById('btn-known')?.addEventListener('click', () => {
     if (!currentWord) return;

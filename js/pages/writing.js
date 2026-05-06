@@ -98,15 +98,18 @@ window.IELTS.pages.writing = (container) => {
         <button class="btn btn-primary" id="btn-submit">提交评分</button>
       </div>
 
-      ${!settings.apiKey ? `
-        <div class="api-notice">
-          💡 <strong>提升评分准确度：</strong>在设置中添加 Claude API Key 可获得AI评分。当前使用规则评分。
-        </div>
-      ` : `
-        <div class="api-notice ai-enabled">
-          🤖 <strong>AI评分已启用</strong>（Claude Haiku）
-        </div>
-      `}
+      ${(() => {
+        const p = settings.aiProvider || 'anthropic';
+        const hasKey = p === 'deepseek' ? !!settings.deepseekKey
+                     : p === 'bai'      ? !!settings.baiKey
+                     :                    !!settings.apiKey;
+        const providerName = p === 'deepseek' ? 'DeepSeek'
+                           : p === 'bai'      ? 'B.ai'
+                           :                    'Claude Haiku';
+        return hasKey
+          ? `<div class="api-notice ai-enabled">🤖 <strong>AI评分已启用</strong>（${providerName}）</div>`
+          : `<div class="api-notice">💡 <strong>提升评分准确度：</strong>在设置中添加 API Key 可获得AI评分。当前使用规则评分。</div>`;
+      })()}
     `;
 
     // Word count
@@ -146,8 +149,12 @@ window.IELTS.pages.writing = (container) => {
     try {
       let result;
       const settings = IELTS.storage.getSettings();
+      const provider = settings.aiProvider || 'anthropic';
+      const hasKey = provider === 'deepseek' ? !!settings.deepseekKey
+                   : provider === 'bai'      ? !!settings.baiKey
+                   :                           !!settings.apiKey;
 
-      if (settings.apiKey) {
+      if (hasKey) {
         try {
           result = await IELTS.writingModule.scoreWithAI(
             text,
@@ -155,7 +162,8 @@ window.IELTS.pages.writing = (container) => {
             currentTask
           );
         } catch (aiErr) {
-          if (aiErr.message === 'NO_API_KEY') {
+          const noKeyMsgs = ['NO_API_KEY', 'NO_DEEPSEEK_KEY', 'NO_BAI_KEY'];
+          if (noKeyMsgs.includes(aiErr.message)) {
             result = IELTS.writingModule.scoreLocally(text, currentTask);
           } else {
             showToastWriting(`AI评分失败: ${aiErr.message}，使用规则评分`);

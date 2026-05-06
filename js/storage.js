@@ -158,11 +158,17 @@ window.IELTS.storage = (() => {
   };
 
   // ── Settings ────────────────────────────────────────────────────
-  const getSettings = () => get('settings', {
-    apiKey: '',
-    dailyVocabTarget: 20,
-    reminderEnabled: false
-  });
+  const getSettings = () => {
+    const defaults = {
+      apiKey: '',
+      deepseekKey: '',
+      baiKey: '',
+      aiProvider: 'anthropic',
+      dailyVocabTarget: 20,
+      reminderEnabled: false
+    };
+    return { ...defaults, ...get('settings', {}) };
+  };
 
   const saveSettings = (settings) => set('settings', settings);
 

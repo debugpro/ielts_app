@@ -82,7 +82,6 @@ window.IELTS.pages.checkin = (container) => {
       <!-- Motivation quote -->
       <div class="motivation-card card">
         <div class="motivation-text">${getMotivationQuote()}</div>
-        <div class="motivation-target">🎯 目标：雅思 8.8.8.8</div>
       </div>
     </div>
   `;
@@ -161,7 +160,7 @@ function getMotivationQuote() {
     '"The secret of getting ahead is getting started." — Mark Twain',
     '"你的雅思7分之路，始于今天的每一个单词。"',
     '"Excellence is not a singular act but a habit." — Aristotle',
-    '"在澳大利亚的阳光下开始新生活，值得你今天的努力。"',
+    '"每一个学过的单词，都是通往梦想的一块砖。"',
     '"Success is the sum of small efforts, repeated day in and day out." — Robert Collier',
     '"每天进步一点点，三个月后你会感谢今天坚持的自己。"',
     '"The future depends on what you do today." — Mahatma Gandhi',
