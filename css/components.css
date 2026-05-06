@@ -807,6 +807,14 @@
 .motivation-text { font-size: 15px; line-height: 1.7; font-style: italic; margin-bottom: 12px; }
 .motivation-target { font-size: 13px; opacity: 0.8; font-weight: 600; }
 
+.card-example-loading {
+  font-size: 13px;
+  color: var(--subtext);
+  margin-top: 12px;
+  text-align: center;
+  padding: 8px 0;
+}
+
 /* Provider selector in settings */
 .provider-tabs {
   display: flex;

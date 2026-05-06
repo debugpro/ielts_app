@@ -1,6 +1,61 @@
 window.IELTS = window.IELTS || {};
 window.IELTS.pages = window.IELTS.pages || {};
 
+async function generateAndCacheExamples(word, backEl, renderFn) {
+  const settings = IELTS.storage.getSettings();
+  const provider = settings.aiProvider || 'anthropic';
+  const hasKey = provider === 'deepseek' ? !!settings.deepseekKey
+               : provider === 'bai'      ? !!settings.baiKey
+               :                           !!settings.apiKey;
+  if (!hasKey) {
+    backEl.querySelector('.card-example-loading').textContent = '💡 在设置中添加 API Key 可自动生成例句';
+    return;
+  }
+
+  const prompt = `Give exactly 3 short example sentences for the English word "${word.word}" (${word.pos} ${word.def}). Each sentence should be simple, clear, and show natural usage. Return ONLY a JSON array of 3 strings, no other text. Example format: ["sentence1","sentence2","sentence3"]`;
+
+  try {
+    let content = '';
+
+    if (provider === 'deepseek') {
+      const res = await fetch('https://api.deepseek.com/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${settings.deepseekKey}` },
+        body: JSON.stringify({ model: 'deepseek-chat', max_tokens: 300, messages: [{ role: 'user', content: prompt }] })
+      });
+      const data = await res.json();
+      content = data.choices[0].message.content;
+    } else if (provider === 'bai') {
+      const res = await fetch('https://api.b.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${settings.baiKey}` },
+        body: JSON.stringify({ model: 'gpt-5.2', max_tokens: 300, temperature: 0.7, messages: [{ role: 'user', content: prompt }] })
+      });
+      const data = await res.json();
+      content = data.choices[0].message.content;
+    } else {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': settings.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 300, messages: [{ role: 'user', content: prompt }] })
+      });
+      const data = await res.json();
+      content = data.content[0].text;
+    }
+
+    const match = content.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error('parse error');
+    const examples = JSON.parse(match[0]);
+    IELTS.storage.setCachedExamples(word.id, examples);
+
+    const loading = backEl.querySelector('.card-example-loading');
+    if (loading) loading.outerHTML = renderFn(examples);
+  } catch (e) {
+    const loading = backEl.querySelector('.card-example-loading');
+    if (loading) loading.textContent = '例句生成失败，请重试';
+  }
+}
+
 window.IELTS.pages.vocabulary = (container) => {
   const progress = IELTS.vocabModule.getDailyProgress();
 
@@ -82,23 +137,34 @@ window.IELTS.pages.vocabulary = (container) => {
       <div class="card-pos">${currentWord.pos || ''}</div>
     `;
 
-    const examples = currentWord.examples && currentWord.examples.length
+    const staticExamples = currentWord.examples && currentWord.examples.length
       ? currentWord.examples
       : (currentWord.example ? [currentWord.example] : []);
 
-    back.innerHTML = `
-      <div class="card-word-small">${currentWord.word}</div>
-      <div class="card-def">${currentWord.def}</div>
+    const cachedExamples = IELTS.storage.getCachedExamples(currentWord.id);
+    const examples = cachedExamples || staticExamples;
+
+    const renderExamplesList = (exArr) => exArr.length ? `
+      <div class="card-example-label">例句</div>
       <div class="card-examples-list">
-        ${examples.map((ex, i) => `
+        ${exArr.map((ex, i) => `
           <div class="card-example-item">
-            <span class="card-example-num">${examples.length > 1 ? (i + 1) + '.' : ''}</span>
+            <span class="card-example-num">${exArr.length > 1 ? (i + 1) + '.' : ''}</span>
             <span class="card-example">"${ex}"</span>
           </div>
         `).join('')}
       </div>
-      ${examples.length ? '<div class="card-example-label">例句</div>' : ''}
+    ` : '<div class="card-example-loading">⏳ 正在生成例句…</div>';
+
+    back.innerHTML = `
+      <div class="card-word-small">${currentWord.word}</div>
+      <div class="card-def">${currentWord.def}</div>
+      ${renderExamplesList(examples)}
     `;
+
+    if (!examples.length) {
+      generateAndCacheExamples(currentWord, back, renderExamplesList);
+    }
   };
 
   const flipCard = () => {

@@ -172,6 +172,20 @@ window.IELTS.storage = (() => {
 
   const saveSettings = (settings) => set('settings', settings);
 
+  // ── Word example cache ──────────────────────────────────────────
+  const getExampleCache = () => get('example_cache', {});
+
+  const getCachedExamples = (wordId) => {
+    const cache = getExampleCache();
+    return cache[wordId] || null;
+  };
+
+  const setCachedExamples = (wordId, examples) => {
+    const cache = getExampleCache();
+    cache[wordId] = examples;
+    set('example_cache', cache);
+  };
+
   // ── Overall stats ───────────────────────────────────────────────
   const getStats = () => {
     const vocab = getVocabProgress();
@@ -188,6 +202,7 @@ window.IELTS.storage = (() => {
     getWritingHistory, saveWritingAttempt,
     getCheckinData, doCheckin, hasCheckedInToday,
     getSettings, saveSettings,
-    getStats
+    getStats,
+    getCachedExamples, setCachedExamples
   };
 })();
