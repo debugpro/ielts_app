@@ -1,6 +1,14 @@
 window.IELTS = window.IELTS || {};
 window.IELTS.pages = window.IELTS.pages || {};
 
+async function prefetchExamples(word) {
+  if (!word) return;
+  const hasStatic = (word.examples && word.examples.length) || word.example;
+  if (hasStatic) return;
+  if (IELTS.storage.getCachedExamples(word.id)) return;
+  await generateAndCacheExamples(word, null, null);
+}
+
 async function generateAndCacheExamples(word, backEl, renderFn) {
   const settings = IELTS.storage.getSettings();
   const provider = settings.aiProvider || 'anthropic';
@@ -48,11 +56,15 @@ async function generateAndCacheExamples(word, backEl, renderFn) {
     const examples = JSON.parse(match[0]);
     IELTS.storage.setCachedExamples(word.id, examples);
 
-    const loading = backEl.querySelector('.card-example-loading');
-    if (loading) loading.outerHTML = renderFn(examples);
+    if (backEl && renderFn) {
+      const loading = backEl.querySelector('.card-example-loading');
+      if (loading) loading.outerHTML = renderFn(examples);
+    }
   } catch (e) {
-    const loading = backEl.querySelector('.card-example-loading');
-    if (loading) loading.textContent = '例句生成失败，请重试';
+    if (backEl) {
+      const loading = backEl.querySelector('.card-example-loading');
+      if (loading) loading.textContent = '例句生成失败，请重试';
+    }
   }
 }
 
@@ -165,6 +177,10 @@ window.IELTS.pages.vocabulary = (container) => {
     if (!examples.length) {
       generateAndCacheExamples(currentWord, back, renderExamplesList);
     }
+
+    // 预取下一张卡片的例句
+    const nextWord = IELTS.vocabModule.getNextWord(currentWord.id);
+    if (nextWord) prefetchExamples(nextWord);
   };
 
   const flipCard = () => {
