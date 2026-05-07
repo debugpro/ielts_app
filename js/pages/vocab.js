@@ -89,7 +89,12 @@ async function generateAndCacheExamples(word, backEl, renderFn) {
   } catch (e) {
     if (backEl) {
       const loading = backEl.querySelector('.card-example-loading');
-      if (loading) loading.textContent = '例句生成失败，请重试';
+      if (loading) loading.innerHTML = '例句生成失败 <button class="retry-examples-btn" style="margin-left:8px;background:rgba(255,255,255,0.25);border:none;border-radius:6px;color:inherit;padding:2px 8px;cursor:pointer;font-size:12px;">重试</button>';
+      backEl.querySelector('.retry-examples-btn')?.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        if (loading) loading.innerHTML = '⏳ 正在生成例句…';
+        generateAndCacheExamples(word, backEl, renderFn);
+      });
     }
   }
 }
@@ -199,7 +204,8 @@ window.IELTS.pages.vocabulary = (container) => {
       : (currentWord.example ? [currentWord.example] : []);
 
     const cachedExamples = IELTS.storage.getCachedExamples(currentWord.id);
-    const examples = cachedExamples || staticExamples;
+    // Treat empty-array cache same as no cache so static examples aren't discarded
+    const examples = (cachedExamples && cachedExamples.length) ? cachedExamples : staticExamples;
 
     const renderExamplesList = (exArr) => exArr.length ? `
       <div class="card-example-label">例句</div>
@@ -298,6 +304,9 @@ window.IELTS.pages.vocabulary = (container) => {
   }, { passive: true });
 
   flashcard?.addEventListener('touchend', (e) => {
+    // Button taps (speak, etc.) must not be intercepted — let click fire normally
+    if (e.target.closest('button, a')) return;
+
     if (hintRight) hintRight.style.opacity = 0;
     if (hintLeft) hintLeft.style.opacity = 0;
 
@@ -308,6 +317,8 @@ window.IELTS.pages.vocabulary = (container) => {
     }
 
     if (!isDragging) {
+      // Tap: handle here and suppress the subsequent synthetic click event
+      e.preventDefault();
       flipCard();
       return;
     }
@@ -315,6 +326,7 @@ window.IELTS.pages.vocabulary = (container) => {
     const dx = e.changedTouches[0].clientX - touchStartX;
     if (dx > SWIPE_THRESHOLD) {
       hasSwiped = true;
+      e.preventDefault();
       if (currentWord) {
         IELTS.vocabModule.markKnown(currentWord.id);
         animateCard('right');
@@ -322,13 +334,14 @@ window.IELTS.pages.vocabulary = (container) => {
       }
     } else if (dx < -SWIPE_THRESHOLD) {
       hasSwiped = true;
+      e.preventDefault();
       if (currentWord) {
         IELTS.vocabModule.markUnknown(currentWord.id);
         animateCard('left');
         setTimeout(() => { loadNextWord(); updateStats(); }, 400);
       }
     }
-  }, { passive: true });
+  }, { passive: false }); // non-passive so e.preventDefault() can suppress click
 
   flashcard?.addEventListener('click', (e) => {
     if (hasSwiped) { hasSwiped = false; return; }
