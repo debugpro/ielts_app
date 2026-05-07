@@ -29,6 +29,7 @@ window.IELTS.pages.speaking = (container) => {
   const partTabs = container.querySelectorAll('.part-tab');
   partTabs.forEach(tab => {
     tab.addEventListener('click', () => {
+      window.speechSynthesis.cancel();
       partTabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       currentPart = tab.dataset.part;

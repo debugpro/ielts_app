@@ -115,6 +115,7 @@ window.IELTS.storage = (() => {
   // ── Check-in / Streak ───────────────────────────────────────────
   const getCheckinData = () => get('checkin', {
     streak: 0,
+    maxStreak: 0,
     lastCheckinDate: null,
     totalDays: 0,
     checkinDates: [],
@@ -137,6 +138,7 @@ window.IELTS.storage = (() => {
       data.streak = 1;
     }
 
+    if (data.streak > (data.maxStreak || 0)) data.maxStreak = data.streak;
     if (!data.startDate) data.startDate = new Date().toISOString();
 
     data.lastCheckinDate = today;
@@ -171,6 +173,20 @@ window.IELTS.storage = (() => {
   };
 
   const saveSettings = (settings) => set('settings', settings);
+
+  // ── Phonetic cache ──────────────────────────────────────────────
+  const getPhoneticCache = () => get('phonetic_cache', {});
+
+  const getCachedPhonetic = (wordId) => {
+    const c = getPhoneticCache();
+    return c[wordId] || null;
+  };
+
+  const setCachedPhonetic = (wordId, phonetic) => {
+    const c = getPhoneticCache();
+    c[wordId] = phonetic;
+    set('phonetic_cache', c);
+  };
 
   // ── Word example cache ──────────────────────────────────────────
   const getExampleCache = () => get('example_cache', {});
@@ -213,6 +229,7 @@ window.IELTS.storage = (() => {
     getSettings, saveSettings,
     getStats,
     getCachedExamples, setCachedExamples,
+    getCachedPhonetic, setCachedPhonetic,
     getCustomPassages, saveCustomPassage
   };
 })();

@@ -111,7 +111,7 @@ window.IELTS.pages.checkin = (container) => {
 function renderAllStats(data) {
   const stats = IELTS.storage.getStats();
   const items = [
-    { label: '最长连续', value: data.streak + '天', icon: '🔥' },
+    { label: '最长连续', value: (data.maxStreak || data.streak) + '天', icon: '🔥' },
     { label: '累计打卡', value: data.totalDays + '天', icon: '📅' },
     { label: '已掌握词汇', value: stats.vocab.known.length + '词', icon: '📚' },
     { label: '口语练习', value: stats.speaking.totalSessions + '次', icon: '🎙️' },

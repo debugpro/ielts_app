@@ -130,6 +130,18 @@
 .settings-link {
   background: none; border: none; color: var(--subtext);
   font-size: 14px; cursor: pointer; padding: 8px 16px;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.api-status-badge { display: inline-flex; }
+.api-badge-on {
+  background: #E8F5E9; color: #2E7D32;
+  font-size: 12px; font-weight: 700;
+  padding: 2px 8px; border-radius: 10px;
+}
+.api-badge-off {
+  background: #FFF3E0; color: #E65100;
+  font-size: 12px; font-weight: 600;
+  padding: 2px 8px; border-radius: 10px;
 }
 
 /* ── Vocab Page ──────────────────────────────────────────────────── */
@@ -230,12 +242,18 @@
   color: var(--text);
   margin-bottom: 8px;
 }
+.card-phonetic-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
 .card-phonetic {
   font-size: 16px;
   color: var(--subtext);
   font-style: italic;
-  margin-bottom: 4px;
 }
+.btn-speak-word {
+  background: none; border: none; font-size: 18px; cursor: pointer;
+  padding: 2px 6px; border-radius: 8px; line-height: 1;
+  color: var(--primary); opacity: 0.7;
+}
+.btn-speak-word:active { opacity: 1; transform: scale(1.2); }
 .card-pos {
   font-size: 13px;
   color: var(--subtext);

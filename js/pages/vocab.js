@@ -1,6 +1,29 @@
 window.IELTS = window.IELTS || {};
 window.IELTS.pages = window.IELTS.pages || {};
 
+async function fetchAndCachePhonetic(word) {
+  const cached = IELTS.storage.getCachedPhonetic(word.id);
+  if (cached !== null) return cached;
+  try {
+    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.word)}`);
+    if (!res.ok) { IELTS.storage.setCachedPhonetic(word.id, ''); return ''; }
+    const data = await res.json();
+    const phonetic = data[0]?.phonetics?.find(p => p.text)?.text || data[0]?.phonetic || '';
+    IELTS.storage.setCachedPhonetic(word.id, phonetic);
+    return phonetic;
+  } catch {
+    return '';
+  }
+}
+
+function speakWord(word) {
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(word);
+  utter.lang = 'en-US';
+  utter.rate = 0.9;
+  window.speechSynthesis.speak(utter);
+}
+
 async function prefetchExamples(word) {
   if (!word) return;
   const hasStatic = (word.examples && word.examples.length) || word.example;
@@ -16,7 +39,10 @@ async function generateAndCacheExamples(word, backEl, renderFn) {
                : provider === 'bai'      ? !!settings.baiKey
                :                           !!settings.apiKey;
   if (!hasKey) {
-    backEl.querySelector('.card-example-loading').textContent = '💡 在设置中添加 API Key 可自动生成例句';
+    if (backEl) {
+      const el = backEl.querySelector('.card-example-loading');
+      if (el) el.textContent = '💡 在设置中添加 API Key 可自动生成例句';
+    }
     return;
   }
 
@@ -37,7 +63,7 @@ async function generateAndCacheExamples(word, backEl, renderFn) {
       const res = await fetch('https://api.b.ai/v1/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${settings.baiKey}` },
-        body: JSON.stringify({ model: 'gpt-5.4-nano', max_tokens: 300, temperature: 0.7, response_format: { type: 'json_object' }, messages: [{ role: 'user', content: prompt }] })
+        body: JSON.stringify({ model: 'gpt-5.4-nano', max_tokens: 300, temperature: 0.7, messages: [{ role: 'user', content: prompt }] })
       });
       const baiJson = await res.json();
       content = baiJson.choices?.[0]?.message?.content || JSON.stringify(baiJson).slice(0, 200);
@@ -142,12 +168,31 @@ window.IELTS.pages.vocabulary = (container) => {
     const front = document.getElementById('card-front');
     const back = document.getElementById('card-back');
 
+    const cachedPhonetic = currentWord.phonetic || IELTS.storage.getCachedPhonetic(currentWord.id) || '';
+
     front.innerHTML = `
       <div class="card-topic-badge">${getTopicLabel(currentWord.topic)}</div>
       <div class="card-word">${currentWord.word}</div>
-      <div class="card-phonetic">${currentWord.phonetic || ''}</div>
+      <div class="card-phonetic-row">
+        <span class="card-phonetic" id="card-phonetic-text">${cachedPhonetic}</span>
+        <button class="btn-speak-word" id="btn-speak-word">🔊</button>
+      </div>
       <div class="card-pos">${currentWord.pos || ''}</div>
     `;
+
+    document.getElementById('btn-speak-word')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      speakWord(currentWord.word);
+    });
+
+    if (!cachedPhonetic) {
+      const capturedId = currentWord.id;
+      fetchAndCachePhonetic(currentWord).then(p => {
+        if (!p || currentWord?.id !== capturedId) return;
+        const el = document.getElementById('card-phonetic-text');
+        if (el) el.textContent = p;
+      });
+    }
 
     const staticExamples = currentWord.examples && currentWord.examples.length
       ? currentWord.examples
@@ -193,6 +238,8 @@ window.IELTS.pages.vocabulary = (container) => {
 
     isFlipped = !isFlipped;
     inner.classList.toggle('flipped', isFlipped);
+
+    if (isFlipped && currentWord) speakWord(currentWord.word); // 仅正→背时朗读
 
     if (isFlipped) {
       actions.style.display = 'flex';

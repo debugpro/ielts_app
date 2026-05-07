@@ -1,6 +1,16 @@
 window.IELTS = window.IELTS || {};
 window.IELTS.pages = window.IELTS.pages || {};
 
+function getApiStatus() {
+  const s = IELTS.storage.getSettings();
+  const provider = s.aiProvider || 'anthropic';
+  const names = { anthropic: 'Claude', deepseek: 'DeepSeek', bai: 'B.ai' };
+  const hasKey = provider === 'deepseek' ? !!s.deepseekKey
+               : provider === 'bai'      ? !!s.baiKey
+               :                           !!s.apiKey;
+  return { provider, name: names[provider] || provider, hasKey };
+}
+
 window.IELTS.pages.home = (container) => {
   const stats = IELTS.storage.getStats();
   const vocabProgress = IELTS.vocabModule.getDailyProgress();
@@ -115,7 +125,10 @@ window.IELTS.pages.home = (container) => {
 
       <!-- Settings link -->
       <div class="settings-row">
-        <button class="settings-link" id="open-settings">⚙️ 设置 / API Key</button>
+        <button class="settings-link" id="open-settings">
+          ⚙️ 设置 / API Key
+          <span class="api-status-badge" id="api-status-badge">${(() => { const a = getApiStatus(); return a.hasKey ? `<span class="api-badge-on">${a.name} ✓</span>` : `<span class="api-badge-off">未配置</span>`; })()}</span>
+        </button>
       </div>
     </div>
   `;
@@ -176,17 +189,17 @@ function showSettings() {
           </label>
         </div>
       </div>
-      <div class="modal-section">
+      <div class="modal-section" id="key-section-anthropic" style="display:${(settings.aiProvider||'anthropic')==='anthropic'?'block':'none'}">
         <div class="modal-label">Anthropic API Key</div>
         <div class="modal-hint">获取：console.anthropic.com</div>
         <input type="password" id="api-key-input" class="modal-input" placeholder="sk-ant-..." value="${settings.apiKey || ''}">
       </div>
-      <div class="modal-section">
+      <div class="modal-section" id="key-section-deepseek" style="display:${settings.aiProvider==='deepseek'?'block':'none'}">
         <div class="modal-label">DeepSeek API Key</div>
         <div class="modal-hint">获取：platform.deepseek.com</div>
         <input type="password" id="deepseek-key-input" class="modal-input" placeholder="sk-..." value="${settings.deepseekKey || ''}">
       </div>
-      <div class="modal-section">
+      <div class="modal-section" id="key-section-bai" style="display:${settings.aiProvider==='bai'?'block':'none'}">
         <div class="modal-label">B.ai API Key</div>
         <div class="modal-hint">获取：api.b.ai</div>
         <input type="password" id="bai-key-input" class="modal-input" placeholder="sk-..." value="${settings.baiKey || ''}">
@@ -212,6 +225,10 @@ function showSettings() {
     radio.addEventListener('change', () => {
       modal.querySelectorAll('.provider-tab').forEach(t => t.classList.remove('active'));
       radio.closest('.provider-tab').classList.add('active');
+      ['anthropic', 'deepseek', 'bai'].forEach(p => {
+        const sec = document.getElementById(`key-section-${p}`);
+        if (sec) sec.style.display = radio.value === p ? 'block' : 'none';
+      });
     });
   });
 
@@ -228,6 +245,11 @@ function showSettings() {
     IELTS.storage.saveSettings(newSettings);
     modal.remove();
     showToast('设置已保存');
+    const badge = document.getElementById('api-status-badge');
+    if (badge) {
+      const a = getApiStatus();
+      badge.innerHTML = a.hasKey ? `<span class="api-badge-on">${a.name} ✓</span>` : `<span class="api-badge-off">未配置</span>`;
+    }
   });
 }
 

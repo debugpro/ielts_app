@@ -125,7 +125,13 @@ window.IELTS.pages.writing = (container) => {
       }
     });
 
-    document.getElementById('btn-new-question')?.addEventListener('click', () => loadQuestion(currentTask));
+    document.getElementById('btn-new-question')?.addEventListener('click', () => {
+      const val = document.getElementById('writing-textarea')?.value?.trim();
+      if (val && val.length > 20) {
+        if (!confirm('当前答案将被清空，确认换题？')) return;
+      }
+      loadQuestion(currentTask);
+    });
 
     document.getElementById('btn-submit')?.addEventListener('click', async () => {
       const text = textarea?.value?.trim();
