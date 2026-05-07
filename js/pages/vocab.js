@@ -263,7 +263,7 @@ window.IELTS.pages.vocabulary = (container) => {
   let touchStartX = 0;
   let touchStartY = 0;
   let isDragging = false;
-  let hasSwiped = false;
+  let touchHandled = false; // prevent touchend + synthetic click double-fire
 
   const flashcard = document.getElementById('flashcard');
   const hintRight = document.getElementById('swipe-hint-right');
@@ -273,7 +273,7 @@ window.IELTS.pages.vocabulary = (container) => {
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     isDragging = false;
-    hasSwiped = false;
+    touchHandled = false;
   }, { passive: true });
 
   flashcard?.addEventListener('touchmove', (e) => {
@@ -304,7 +304,7 @@ window.IELTS.pages.vocabulary = (container) => {
   }, { passive: true });
 
   flashcard?.addEventListener('touchend', (e) => {
-    // Button taps (speak, etc.) must not be intercepted — let click fire normally
+    // Let buttons (speak, retry, etc.) handle their own click events
     if (e.target.closest('button, a')) return;
 
     if (hintRight) hintRight.style.opacity = 0;
@@ -316,35 +316,33 @@ window.IELTS.pages.vocabulary = (container) => {
       inner.style.transform = inner.classList.contains('flipped') ? 'rotateY(180deg)' : '';
     }
 
-    if (!isDragging) {
-      // Tap: handle here and suppress the subsequent synthetic click event
-      e.preventDefault();
-      flipCard();
-      return;
-    }
+    const dx = isDragging ? (e.changedTouches[0].clientX - touchStartX) : 0;
 
-    const dx = e.changedTouches[0].clientX - touchStartX;
     if (dx > SWIPE_THRESHOLD) {
-      hasSwiped = true;
-      e.preventDefault();
+      touchHandled = true;
       if (currentWord) {
         IELTS.vocabModule.markKnown(currentWord.id);
         animateCard('right');
         setTimeout(() => { loadNextWord(); updateStats(); }, 400);
       }
     } else if (dx < -SWIPE_THRESHOLD) {
-      hasSwiped = true;
-      e.preventDefault();
+      touchHandled = true;
       if (currentWord) {
         IELTS.vocabModule.markUnknown(currentWord.id);
         animateCard('left');
         setTimeout(() => { loadNextWord(); updateStats(); }, 400);
       }
+    } else {
+      // Tap or short drag that didn't become a swipe → flip
+      touchHandled = true;
+      flipCard();
     }
-  }, { passive: false }); // non-passive so e.preventDefault() can suppress click
+  }, { passive: true });
 
+  // Desktop mouse clicks only — on touch devices touchend already handled everything
   flashcard?.addEventListener('click', (e) => {
-    if (hasSwiped) { hasSwiped = false; return; }
+    if (touchHandled) { touchHandled = false; return; }
+    if (e.target.closest('button, a')) return;
     flipCard();
   });
 
