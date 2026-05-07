@@ -163,6 +163,8 @@ window.IELTS.pages.vocabulary = (container) => {
     if (!card) return;
 
     inner.classList.remove('flipped');
+    inner.style.transform = '';   // clear stale inline from touchend drag-restore
+    inner.style.transition = '';  // clear stale transition override from touchmove
     actions.style.display = 'none';
     if (tapHint) tapHint.style.display = 'block';
     if (cardTapHint) cardTapHint.style.display = 'block';
@@ -244,6 +246,10 @@ window.IELTS.pages.vocabulary = (container) => {
 
     isFlipped = !isFlipped;
     inner.classList.toggle('flipped', isFlipped);
+    // Always clear inline transform so the CSS class has full control.
+    // touchend may have set a drag-restore inline value; without this clear
+    // the inline overrides the class and the card stays visually stuck.
+    inner.style.transform = '';
 
     if (isFlipped && currentWord) speakWord(currentWord.word); // 仅正→背时朗读
 
@@ -336,6 +342,10 @@ window.IELTS.pages.vocabulary = (container) => {
       // Tap or short drag that didn't become a swipe → flip
       touchHandled = true;
       flipCard();
+      // Clear inline transform so the CSS class controls the final rotation.
+      // Without this, the drag-restore inline style overrides the class toggle
+      // and the card stays visually stuck in the previous face.
+      if (inner) inner.style.transform = '';
     }
   }, { passive: true });
 

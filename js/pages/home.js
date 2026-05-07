@@ -16,8 +16,6 @@ window.IELTS.pages.home = (container) => {
   const vocabProgress = IELTS.vocabModule.getDailyProgress();
   const checkinData = stats.checkin;
   const hasChecked = IELTS.storage.hasCheckedInToday();
-  const phaseInfo = IELTS.checkinModule.getPhaseInfo(checkinData.phase || 'foundation');
-
   const today = new Date();
   const hours = today.getHours();
   const greeting = hours < 12 ? '早上好' : hours < 18 ? '下午好' : '晚上好';
@@ -41,28 +39,6 @@ window.IELTS.pages.home = (container) => {
           </div>
         </div>
         ${!hasChecked ? `<button class="checkin-btn" id="quick-checkin">打卡</button>` : `<div class="checked-badge">✓ 已打卡</div>`}
-      </div>
-
-      <!-- Phase Progress -->
-      <div class="card phase-card">
-        <div class="phase-header">
-          <span class="phase-emoji">${phaseInfo.emoji}</span>
-          <div class="phase-info">
-            <div class="phase-name">${phaseInfo.name}</div>
-            <div class="phase-desc">${phaseInfo.description}</div>
-          </div>
-          <div class="phase-days">第${checkinData.totalDays}天</div>
-        </div>
-        <div class="phase-progress-wrap">
-          <div class="phase-bars">
-            ${IELTS.checkinModule.PHASES.map((p, i) => `
-              <div class="phase-bar-item ${p.id === checkinData.phase ? 'active' : ''} ${checkinData.totalDays > (i * 30) ? 'done' : ''}">
-                <div class="phase-bar-fill" style="background:${p.color}; width:${p.id === checkinData.phase ? IELTS.checkinModule.getPhaseProgress(checkinData.totalDays).progressPercent : (checkinData.totalDays > (i+1)*30 ? 100 : 0)}%"></div>
-                <div class="phase-bar-label">${p.name}</div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
       </div>
 
       <!-- Today's Progress -->
@@ -129,6 +105,7 @@ window.IELTS.pages.home = (container) => {
           ⚙️ 设置 / API Key
           <span class="api-status-badge" id="api-status-badge">${(() => { const a = getApiStatus(); return a.hasKey ? `<span class="api-badge-on">${a.name} ✓</span>` : `<span class="api-badge-off">未配置</span>`; })()}</span>
         </button>
+        <div class="build-info">构建于 ${new Date(document.lastModified).toLocaleString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
       </div>
     </div>
   `;
