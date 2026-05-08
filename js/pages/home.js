@@ -105,7 +105,7 @@ window.IELTS.pages.home = (container) => {
           ⚙️ 设置 / API Key
           <span class="api-status-badge" id="api-status-badge">${(() => { const a = getApiStatus(); return a.hasKey ? `<span class="api-badge-on">${a.name} ✓</span>` : `<span class="api-badge-off">未配置</span>`; })()}</span>
         </button>
-        <div class="build-info">构建于 ${new Date(document.lastModified).toLocaleString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
+        <div class="build-info">构建于 2026-05-08</div>
       </div>
     </div>
   `;

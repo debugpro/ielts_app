@@ -8,7 +8,9 @@ async function fetchAndCachePhonetic(word) {
     const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.word)}`);
     if (!res.ok) { IELTS.storage.setCachedPhonetic(word.id, ''); return ''; }
     const data = await res.json();
-    const phonetic = data[0]?.phonetics?.find(p => p.text)?.text || data[0]?.phonetic || '';
+    const phonetics = data[0]?.phonetics || [];
+    const ukPhonetic = phonetics.find(p => p.text && p.audio && (p.audio.includes('/uk/') || p.audio.includes('-gb')));
+    const phonetic = (ukPhonetic || phonetics.find(p => p.text))?.text || data[0]?.phonetic || '';
     IELTS.storage.setCachedPhonetic(word.id, phonetic);
     return phonetic;
   } catch {
@@ -19,7 +21,7 @@ async function fetchAndCachePhonetic(word) {
 function speakWord(word) {
   window.speechSynthesis.cancel();
   const utter = new SpeechSynthesisUtterance(word);
-  utter.lang = 'en-US';
+  utter.lang = 'en-GB';
   utter.rate = 0.9;
   window.speechSynthesis.speak(utter);
 }
@@ -119,6 +121,7 @@ window.IELTS.pages.vocabulary = (container) => {
         <div class="vs-item known">✓ ${progress.known}</div>
         <div class="vs-item unknown">✗ ${progress.unknown}</div>
         <div class="vs-item total">总 ${progress.total}</div>
+        ${progress.unknown > 0 ? `<button class="vs-btn" id="vocab-review">复习 ${progress.unknown}个</button>` : ''}
         <button class="vs-btn" id="vocab-browse">浏览全部</button>
       </div>
 
@@ -151,6 +154,9 @@ window.IELTS.pages.vocabulary = (container) => {
 
   let currentWord = null;
   let isFlipped = false;
+  let reviewMode = false;
+  let reviewQueue = [];
+  let reviewIndex = 0;
 
   const loadNextWord = () => {
     isFlipped = false;
@@ -169,7 +175,15 @@ window.IELTS.pages.vocabulary = (container) => {
     if (tapHint) tapHint.style.display = 'block';
     if (cardTapHint) cardTapHint.style.display = 'block';
 
-    currentWord = IELTS.vocabModule.getNextWord(currentWord?.id);
+    if (reviewMode) {
+      if (reviewIndex >= reviewQueue.length) {
+        showReviewComplete();
+        return;
+      }
+      currentWord = reviewQueue[reviewIndex++];
+    } else {
+      currentWord = IELTS.vocabModule.getNextWord(currentWord?.id);
+    }
     if (!currentWord) return;
 
     const front = document.getElementById('card-front');
@@ -370,6 +384,27 @@ window.IELTS.pages.vocabulary = (container) => {
     setTimeout(() => { loadNextWord(); updateStats(); }, 400);
   });
 
+  document.getElementById('vocab-review')?.addEventListener('click', () => {
+    if (reviewMode) {
+      IELTS.router.navigate('vocabulary');
+      return;
+    }
+    const rawProgress = IELTS.storage.getVocabProgress();
+    const unknownIds = new Set(rawProgress.unknown || []);
+    reviewQueue = IELTS.words.filter(w => unknownIds.has(w.id));
+    if (!reviewQueue.length) return;
+    // shuffle for varied order
+    for (let i = reviewQueue.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [reviewQueue[i], reviewQueue[j]] = [reviewQueue[j], reviewQueue[i]];
+    }
+    reviewIndex = 0;
+    reviewMode = true;
+    const btn = document.getElementById('vocab-review');
+    if (btn) btn.textContent = '退出复习';
+    loadNextWord();
+  });
+
   document.getElementById('vocab-browse')?.addEventListener('click', () => {
     showWordBrowser(container);
   });
@@ -390,7 +425,34 @@ window.IELTS.pages.vocabulary = (container) => {
     if (text) text.textContent = `${p.todayCount}/${p.target} 今日`;
     if (vsItems[0]) vsItems[0].textContent = `✓ ${p.known}`;
     if (vsItems[1]) vsItems[1].textContent = `✗ ${p.unknown}`;
+    if (!reviewMode) {
+      const reviewBtn = document.getElementById('vocab-review');
+      if (reviewBtn) {
+        reviewBtn.style.display = p.unknown > 0 ? '' : 'none';
+        if (p.unknown > 0) reviewBtn.textContent = `复习 ${p.unknown}个`;
+      }
+    }
   }
+
+  const showReviewComplete = () => {
+    reviewMode = false;
+    const fc = document.getElementById('flashcard-container');
+    const actions = document.getElementById('card-actions');
+    const cardTapHint = document.getElementById('card-tap-hint');
+    if (actions) actions.style.display = 'none';
+    if (cardTapHint) cardTapHint.style.display = 'none';
+    if (fc) fc.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;gap:12px">
+        <div style="font-size:48px">🎉</div>
+        <div style="font-size:20px;font-weight:700;color:var(--text)">复习完成！</div>
+        <div style="font-size:14px;color:var(--subtext)">已复习 ${reviewQueue.length} 个生词</div>
+        <button class="btn btn-primary" id="btn-exit-review" style="margin-top:8px">返回练习</button>
+      </div>
+    `;
+    document.getElementById('btn-exit-review')?.addEventListener('click', () => {
+      IELTS.router.navigate('vocabulary');
+    });
+  };
 
   loadNextWord();
 };
