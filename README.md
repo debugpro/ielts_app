@@ -29,7 +29,7 @@ python3 server.py
 
 ## 项目结构
 
-```
+```text
 ielts_app/
 ├── index.html           # 入口，单页应用
 ├── css/
